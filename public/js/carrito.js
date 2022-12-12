@@ -8,11 +8,11 @@ const productosApi = {
 const carritosApi = {
     crearCarrito: () => {
         const options = { method: "POST" }
-        return fetch('/api/carritos', options)
+        return fetch('/api/carrito', options)
             .then(data => data.json())
     },
     getIds: () => {
-        return fetch('/api/carritos')
+        return fetch('/api/carrito')
             .then(data => data.json())
     },
     postProd: (idCarrito, idProd) => {
@@ -24,23 +24,37 @@ const carritosApi = {
             },
             body: JSON.stringify(data)
         }
-        return fetch(`/api/carritos/${idCarrito}/productos`, options)
+        return fetch(`/api/carrito/${idCarrito}/products`, options)
     },
     getProds: idCarrito => {
-        return fetch(`/api/carritos/${idCarrito}/productos`)
+        return fetch(`/api/carrito/${idCarrito}/products`)
             .then(data => data.json())
     },
     deleteProd: (idCarrito, idProducto) => {
         const options = {
             method: 'DELETE',
         }
-        return fetch(`/api/carritos/${idCarrito}/productos/${idProducto}`, options)
+        return fetch(`/api/carrito/${idCarrito}/products/${idProducto}`, options)
     }
 }
 
-loadComboProductos()
+const loadComboCarrito = () => {
+    return carritosApi.getIds()
+        .then(carts => {
+            const combo = document.getElementById('comboCarritos');
+            vaciarCombo(combo)
+            combo.appendChild(crearOpcionInicial('Choose a cart'))
+            carts.map(({ id }) => {
+                const comboItem = document.createElement("option");
+                comboItem.value = id;
+                comboItem.text = id;
+                combo.appendChild(comboItem);
+            })
 
-loadComboCarrito()
+        })
+}
+
+
 
 document.getElementById('btnAgregarAlCarrito').addEventListener('click', () => {
     const idCarrito = document.getElementById('comboCarritos').value
@@ -81,15 +95,17 @@ function quitarDelCarrito(idProducto) {
     })
 }
 
-function actualizarListaCarrito(idCarrito) {
+const actualizarListaCarrito = (idCarrito) => {
     return carritosApi.getProds(idCarrito)
         .then(prods => makeHtmlTable(prods))
         .then(html => {
-            document.getElementById('carrito').innerHTML = html
+            document.getElementById('cart').innerHTML = html
         })
 }
 
-function makeHtmlTable(productos) {
+const makeHtmlTable = (productos) => {
+
+    console.log('productos', productos)
     let html = `
         <style>
             .table td,
@@ -100,24 +116,33 @@ function makeHtmlTable(productos) {
 
     if (productos.length > 0) {
         html += `
-        <h2>Lista de Productos</h2>
+        <h3 class="text-primary">Cart Products</h3>
         <div class="table-responsive">
-            <table class="table table-dark">
-                <tr>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Foto</th>
-                </tr>`
+            <table class="table table-default table-striped table-bordered mt-2 align-middle text-center ">
+                <thead>
+                    <tr class="text-primary table-secondary">
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Picture</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>`
         for (const prod of productos) {
             html += `
                     <tr>
-                    <td>${prod.title}</td>
-                    <td>$${prod.price}</td>
-                    <td><img width="50" src=${prod.thumbnail} alt="not found"></td>
-                    <td><a type="button" onclick="quitarDelCarrito('${prod.id}')">borrar</a></td>
+                        <td>${prod.title}</td>
+                        <td>$${prod.price}</td>
+                        <td><img width="50" src=${prod.thumbnail} alt="not found"></td>
+                        <td>
+                            <button type="button" onclick="quitarDelCarrito('${prod.id}')" class="btn btn-danger btn-sm" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </td>
                     </tr>`
         }
         html += `
+                </tbody>
             </table>
         </div >`
     } else {
@@ -140,7 +165,7 @@ function loadComboProductos() {
     return productosApi.get()
         .then(productos => {
             const combo = document.getElementById('comboProductos');
-            combo.appendChild(crearOpcionInicial('elija un producto'))
+            combo.appendChild(crearOpcionInicial('Choose a product'))
             for (const prod of productos) {
                 const comboItem = document.createElement("option");
                 comboItem.value = prod.id;
@@ -156,17 +181,6 @@ function vaciarCombo(combo) {
     }
 }
 
-function loadComboCarrito() {
-    return carritosApi.getIds()
-        .then(ids => {
-            const combo = document.getElementById('comboCarritos');
-            vaciarCombo(combo)
-            combo.appendChild(crearOpcionInicial('elija un carrito'))
-            for (const id of ids) {
-                const comboItem = document.createElement("option");
-                comboItem.value = id;
-                comboItem.text = id;
-                combo.appendChild(comboItem);
-            }
-        })
-}
+loadComboProductos()
+
+loadComboCarrito()

@@ -6,11 +6,10 @@ const productosRouter = new Router();
 
 
 // importamos la clase Container
-const ContainerArchivo = require('../container/Container.js')
+const Container = require('../container/container.js')
 
 // Se instancia la clase contenedor
-const ProductService = new ContainerArchivo("./src/productos.json")
-
+const ProductService = new Container("./src/productos.json")
 
 // funcion Error
 function crearErrorNoEsAdmin(ruta, metodo) {
@@ -18,19 +17,19 @@ function crearErrorNoEsAdmin(ruta, metodo) {
         error: -1,
     }
     if (ruta && metodo) {
-        error.descripcion = `ruta '${ruta}' metodo '${metodo}' no autorizado`
+        error.descripcion = `Path: ${ruta}\nMethod: ${metodo}\nStatus: Unauthorized`
     } else {
-        error.descripcion = 'no autorizado'
+        error.descripcion = 'Unauthorized'
     }
     return error
 }
 
 // Middleware para Administrador
-const esAdmin = true
+const esAdmin = false
 
 function soloAdmins(req, res, next) {
     if (!esAdmin) {
-        res.json(crearErrorNoEsAdmin(req.url, req.method))
+        res.status(401).json(crearErrorNoEsAdmin(req.originalUrl, req.method))
     } else {
         next()
     }
@@ -39,7 +38,6 @@ function soloAdmins(req, res, next) {
 
 // Endpoints
 productosRouter.get('/', async (req, res) => {
-    // logica
     try {
         return res.status(200).json(await ProductService.getAll())
     } catch (error) {

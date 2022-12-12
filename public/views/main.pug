@@ -6,4 +6,9 @@ html(lang='es')
     title="DESAFIO 5- PUG" 
     script(src='./socket.io/socket.io.js')
   body
-    block index
+    include ./components/navbar
+    br
+    div(class="container mb-5 d-flex justify-content-between gap-3")  
+      block index
+
+    include ./components/scripts

@@ -33,67 +33,92 @@ const productosApi = {
 
 //-------------------------------------------------------------------
 // productos
-
-actualizarListaProductos()
-
 const formAgregarProducto = document.getElementById('formAgregarProducto')
+
 formAgregarProducto.addEventListener('submit', e => {
     e.preventDefault()
-    const producto = leerProductoDelFormulario()
+    const producto = leerProductoDelFormulario(e.target)
     productosApi.post(producto)
-        .then(actualizarListaProductos)
+        .then((response) => {
+            if (!response.ok) {
+                response.json().then(({ descripcion }) => {
+                    alert(descripcion)
+                })
+            }
+            actualizarListaProductos()
+        })
         .then(() => {
             formAgregarProducto.reset()
         })
         .catch((err) => {
-            alert(err.message)
+            console.log(err);
         })
 })
 
-function leerProductoDelFormulario() {
+const leerProductoDelFormulario = () => {
+    const formData = new FormData(formAgregarProducto);
+    const { title, price, stock, thumbnail, description } = Object.fromEntries(formData);
+
     const producto = {
-        title: formAgregarProducto[0].value,
-        price: formAgregarProducto[1].value,
-        stock: formAgregarProducto[2].value,
-        description: formAgregarProducto[3].value,
-        thumbnail: formAgregarProducto[4].value,
-        codigo: formAgregarProducto[5].value,
-        timestamp: formAgregarProducto[6].value
+        title,
+        price,
+        stock,
+        thumbnail,
+        description
     }
     return producto
 }
 
-function actualizarListaProductos() {
+const actualizarListaProductos = () => {
     return productosApi.get()
-        .then(prods => makeHtmlTable(prods))
+        .then(prods => makeHtmlTableProducts(prods))
         .then(html => {
             document.getElementById('productos').innerHTML = html
         })
 }
 
-function borrarProducto(idProd) {
+const borrarProducto = (idProd) => {
     productosApi.delete(idProd)
-        .then(actualizarListaProductos)
+        .then((response) => {
+            if (!response.ok) {
+                response.json().then(({ descripcion }) => {
+                    alert(descripcion)
+                })
+            }
+            actualizarListaProductos()
+        })
+        .catch((err) => {
+            console.log(err);
+        })
 }
 
-function actualizarProducto(idProd) {
+const actualizarProducto = (idProd) => {
     const nuevoProd = leerProductoDelFormulario()
     productosApi.put(idProd, nuevoProd)
-        .then(actualizarListaProductos)
+        .then((response) => {
+            if (!response.ok) {
+                response.json().then(({ descripcion }) => {
+                    alert(descripcion)
+                })
+            }
+            actualizarListaProductos().then(() => {
+                formAgregarProducto.reset()
+            })
+        })
+        .catch((err) => {
+            console.log(err);
+        })
 }
 
-
-function llenarFormulario(title = '', price = '', thumbnail = '', stock = '', description = '', codigo = '', timestamp = '') {
+const llenarFormulario = (title = '', price = '', stock = '', thumbnail = '', description = '') => {
     formAgregarProducto[0].value = title
     formAgregarProducto[1].value = price
-    formAgregarProducto[2].value = thumbnail
-    formAgregarProducto[3].value = stock
+    formAgregarProducto[2].value = stock
+    formAgregarProducto[3].value = thumbnail
     formAgregarProducto[4].value = description
-    formAgregarProducto[5].value = codigo
-    formAgregarProducto[6].value = timestamp
 }
 
-function makeHtmlTable(productos) {
+const makeHtmlTableProducts = (productos) => {
     let html = `
         <style>
             .table td,
@@ -104,28 +129,48 @@ function makeHtmlTable(productos) {
 
     if (productos.length > 0) {
         html += `
-        <h2>Lista de Productos</h2>
+        <h3 class="text-primary">Product List</h3>
         <div class="table-responsive">
-            <table class="table table-dark">
-                <tr>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Foto</th>
-                    <th>Foto</th>
-                </tr>`
+            <table class="table table-default table-striped table-bordered mt-2 align-middle text-center ">
+                <thead>
+                    <tr class="text-primary table-secondary">
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Created date</th>
+                        <th>Picture</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>`
         for (const prod of productos) {
             html += `
                     <tr>
-                    <td><a type="button" onclick="llenarFormulario('${prod.title}', '${prod.price}','${prod.thumbnail}')" title="copiar a formulario...">${prod.title}</a></td>
-                    <td>$${prod.price}</td>
-                    <td><img width="50" src=${prod.thumbnail} alt="not found"></td>
-                    <td><a type="button" onclick="borrarProducto('${prod.id}')">borrar</a></td>
-                    <td><a type="button" onclick="actualizarProducto('${prod.id}')">actualizar</a></td>
+                        <td>
+                            <a type="button" class="link-primary" onclick="llenarFormulario('${prod.title}', '${prod.price}', '${prod.stock}', '${prod.thumbnail}', '${prod.description}')" title="copiar a formulario...">${prod.title}</a>
+                        </td>
+                        <td>€${prod.price}</td>
+                        <td>${prod.stock}</td>
+                        <td>${new Date(prod.timestamp).toLocaleString()}</td>
+                        <td>
+                            <img width="50" src=${prod.thumbnail} alt="not found">
+                        </td>
+                        <td>
+                            <button type="button" onclick="borrarProducto('${prod.id}')" class="btn btn-danger btn-sm" title="Delete">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                            <button type="button" onclick="actualizarProducto('${prod.id}')" class="btn btn-primary btn-sm" title="Modify">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                        </td>
                     </tr>`
         }
         html += `
+                </tbody>
             </table>
         </div >`
     }
     return Promise.resolve(html)
 }
+
+actualizarListaProductos()

@@ -30,7 +30,13 @@ app.set("views", path.join(__dirname, "../public/views"))
 app.set('view engine', 'pug')
 
 app.get('/', async (req, res) => {
-  res.render('index')
+  res.render('pages/index')
+})
+app.get('/products', async (req, res) => {
+  res.render('pages/products')
+})
+app.get('/cart', async (req, res) => {
+  res.render('pages/cart')
 })
 app.get('*', function (req, res) {
   res.send({ status: "error", description: `ruta ${req.url} método ${req.method} no implementada` });
